@@ -31,12 +31,10 @@ values."
    ;; List of configuration layers to load.
    dotspacemacs-configuration-layers
    '(
-     html
-     python
-d
-     go
      rust
-     windows-scripts
+	 autohotkey
+	 javascript
+     csharp
      ;; ----------------------------------------------------------------
      ;; Example of useful layers you may want to use right away.
      ;; Uncomment some layer names and press <SPC f e R> (Vim style) or
@@ -46,15 +44,16 @@ d
      auto-completion
      ;; better-defaults
      emacs-lisp
-     ;; git
+     git
      ;; markdown
-     org
-     (shell :variables
-             shell-default-height 30
-             shell-default-position 'bottom)
+     ;; org
+     ;; (shell :variables
+     ;;        shell-default-height 30
+     ;;        shell-default-position 'bottom)
      ;; spell-checking
-     ;; syntax-checking
+     syntax-checking
      ;; version-control
+	 treemacs
      )
    ;; List of additional packages that will be installed without being
    ;; wrapped in a layer. If you need some configuration for these
@@ -132,14 +131,15 @@ values."
    ;; List of themes, the first of the list is loaded when spacemacs starts.
    ;; Press <SPC> T n to cycle to the next theme in the list (works great
    ;; with 2 themes variants, one dark and one light)
-   dotspacemacs-themes '(spacemacs-dark
+   dotspacemacs-themes '(ample
+						 spacemacs-dark
                          spacemacs-light)
    ;; If non nil the cursor color matches the state color in GUI Emacs.
    dotspacemacs-colorize-cursor-according-to-state t
    ;; Default font, or prioritized list of fonts. `powerline-scale' allows to
    ;; quickly tweak the mode-line size to make separators look not too crappy.
-   dotspacemacs-default-font '("IBM Plex Mono"
-                               :size 16
+   dotspacemacs-default-font '("Cascadia Code"
+                               :size 14
                                :weight normal
                                :width normal
                                :powerline-scale 1.1)
@@ -296,7 +296,7 @@ values."
    ;; `trailing' to delete only the whitespace at end of lines, `changed'to
    ;; delete only whitespace for changed lines or `nil' to disable cleanup.
    ;; (default nil)
-   dotspacemacs-whitespace-cleanup nil
+   dotspacemacs-whitespace-cleanup 'trailing
    ))
 
 (defun dotspacemacs/user-init ()
@@ -306,20 +306,7 @@ executes.
  This function is mostly useful for variables that need to be set
 before packages are loaded. If you are unsure, you should try in setting them in
 `dotspacemacs/user-config' first."
-(load "C:/Program Files/LLVM/share/clang/clang-format.el")
-
-;; Kill *Messages* buffer and stuff
-(kill-buffer "*Messages*")
-(setq inhibit-startup-buffer-menu t)
-(setq initial-scratch-message "")
-(defun remove-messages-buffer()
-  (if (get-buffer "*Messages*")
-      (kill-buffer "*Messages*"))
-  (if (get-buffer "*spacemacs*")
-      (kill-buffer "*spacemacs*")))
-(add-hook 'after-change-major-mode-hook 'remove-messages-buffer)
-(setq-default message-log-max nil)
-)
+  )
 
 (defun dotspacemacs/user-config ()
   "Configuration function for user code.
@@ -328,32 +315,124 @@ layers configuration.
 This is the place where most of your configurations should be done. Unless it is
 explicitly specified that a variable should be set before a package is loaded,
 you should place your code here."
-(setq-default evil-escape-key-sequence ",,")
-(setq-default evil-escape-delay 0.2)
-(setq-default tab-width 4)
-(setq-default c-basic-offset 4)
+;; Font ligatures
+(let ((alist '((33 . ".\\(?:\\(?:==\\|!!\\)\\|[!=]\\)")
+               (35 . ".\\(?:###\\|##\\|_(\\|[#(?[_{]\\)")
+               (36 . ".\\(?:>\\)")
+               (37 . ".\\(?:\\(?:%%\\)\\|%\\)")
+               (38 . ".\\(?:\\(?:&&\\)\\|&\\)")
+               (42 . ".\\(?:\\(?:\\*\\*/\\)\\|\\(?:\\*[*/]\\)\\|[*/>]\\)")
+               (43 . ".\\(?:\\(?:\\+\\+\\)\\|[+>]\\)")
+               (45 . ".\\(?:\\(?:-[>-]\\|<<\\|>>\\)\\|[<>}~-]\\)")
+               (46 . ".\\(?:\\(?:\\.[.<]\\)\\|[.=-]\\)")
+               (47 . ".\\(?:\\(?:\\*\\*\\|//\\|==\\)\\|[*/=>]\\)")
+               (48 . ".\\(?:x[a-zA-Z]\\)")
+               (58 . ".\\(?:::\\|[:=]\\)")
+               (59 . ".\\(?:;;\\|;\\)")
+               (60 . ".\\(?:\\(?:!--\\)\\|\\(?:~~\\|->\\|\\$>\\|\\*>\\|\\+>\\|--\\|<[<=-]\\|=[<=>]\\||>\\)\\|[*$+~/<=>|-]\\)")
+               (61 . ".\\(?:\\(?:/=\\|:=\\|<<\\|=[=>]\\|>>\\)\\|[<=>~]\\)")
+               (62 . ".\\(?:\\(?:=>\\|>[=>-]\\)\\|[=>-]\\)")
+               (63 . ".\\(?:\\(\\?\\?\\)\\|[:=?]\\)")
+               (91 . ".\\(?:]\\)")
+               (92 . ".\\(?:\\(?:\\\\\\\\\\)\\|\\\\\\)")
+               (94 . ".\\(?:=\\)")
+               (119 . ".\\(?:ww\\)")
+               (123 . ".\\(?:-\\)")
+               (124 . ".\\(?:\\(?:|[=|]\\)\\|[=>|]\\)")
+               (126 . ".\\(?:~>\\|~~\\|[>=@~-]\\)")
+               )
+             ))
+  (dolist (char-regexp alist)
+    (set-char-table-range composition-function-table (car char-regexp)
+                          `([,(cdr char-regexp) 0 font-shape-gstring]))))
+(add-hook 'helm-major-mode-hook
+          (lambda ()
+            (setq auto-composition-mode nil)))
+;; Set frame size
+(add-to-list 'default-frame-alist '(height . 40))
+(add-to-list 'default-frame-alist '(width . 125))
 
-;; Enable Clang support
-(setq-default dotspacemacs-configuration-layers
-              '((c-c++ :variables c-c++-enable-clang-support t)))
+;; Bind <apps> key to helm-buffers-list
+(global-set-key (kbd "<apps>") 'helm-buffers-list)
 
-;; Clang format
-(global-set-key [C-tab] 'clang-format-region)
 
-;; Nuke all buffers
-(defun nuke-all-buffers ()
+
+;; Bind format to C-M-F
+(global-set-key (kbd "C-M-f") 'indent-region)
+
+;; Bind C-return to jump to new line w/o breaking current line
+(defun newline-without-breaking-line ()
   (interactive)
-  (mapcar 'kill-buffer (buffer-list))
-  (delete-other-windows))
-(global-set-key (kbd "C-x K") 'nuke-all-buffers)
+  (let ((oldpos (point)))
+    (end-of-line)
+    (newline-and-indent)))
+(global-set-key (kbd "<C-return>") 'newline-without-breaking-line)
 
-;; Disable messages buffer
+;; Move line up and down
+(defun move-line-up()
+  (interactive)
+  (transpose-lines 1)
+  (forward-line -2)
+  (indent-according-to-mode))
+(defun move-line-down()
+  (interactive)
+  (forward-line 1)
+  (transpose-lines 1)
+  (forward-line -1)
+  (indent-according-to-mode))
+(global-set-key [(control up)] 'move-line-up)
+(global-set-key [(control down)] 'move-line-down)
+
+(defun semicolon-to-the-end()
+  (interactive)
+  (end-of-line)
+  (insert ";"))
+(global-set-key (kbd "C-;") 'semicolon-to-the-end)
+
+;; Delete trailing whitespace before saving
+;; (add-hook 'before-save-hook 'delete-trailing-whitespace)
+
+;; Tab width
+(setq-default tab-width 4)
+;; Set tab-stop
+(setq-default tab-stop-list '(4 8 12 16 20))
+(setq-default c-basic-offset 4
+              c-indent-level 4
+              c-brace-imaginary-offset 0
+              c-brace-offset -4
+              c-argdecl-indent 4
+              c-label-offset -4
+              c-continued-statement-offset 4)
+;; Indent using spaces
+(setq-default indent-tabs-mode t)
+
+;; Disable splash screen
+(setq inhibit-splash-screen t)
+(setq inhibit-startup-screen t
+      initial-buffer-choice nil)
+
+;; Disable bell sounds
+(setq visible-bell 1)
+
+;; Disables completions buffer
+(add-hook 'minibuffer-exit-hook
+      '(lambda ()
+         (let ((buffer "*Completions*"))
+           (and (get-buffer buffer)
+                (kill-buffer buffer)))))
+
+;; Disable startup messages
 (setq-default message-log-max nil)
+(kill-buffer "*Messages*")
+(kill-buffer "*spacemacs*")
 
-;; Disable line continuation symbol
-(setf (cdr (assq 'continuation fringe-indicator-alist))
-      '(nil right-curly-arrow))
-)
+;; Set evil mode cursors
+(setq-default evil-default-cursor (quote (t "#cd5c5c"))
+			  evil-normal-state-cursor '("#cd5c5c" box)
+			  evil-insert-state-cursor '("#5ccdcd" box)
+			  evil-visual-state-cursor '("#cd955c" box)
+			  )
+  )
 
 ;; Do not write anything past this comment. This is where Emacs will
 ;; auto-generate custom variable definitions.
@@ -365,10 +444,10 @@ you should place your code here."
  '(evil-want-Y-yank-to-eol nil)
  '(package-selected-packages
    (quote
-    (web-mode tagedit slim-mode scss-mode sass-mode pug-mode helm-css-scss haml-mode emmet-mode company-web web-completion-data xterm-color shell-pop multi-term eshell-z eshell-prompt-extras esh-help helm-company helm-c-yasnippet fuzzy company-statistics company-go company-dcd ivy flycheck-dmd-dub company-anaconda company auto-yasnippet yasnippet ac-ispell auto-complete org-projectile org-category-capture org-present org-pomodoro alert log4e gntp org-mime org-download htmlize gnuplot yapfify pyvenv pytest pyenv-mode py-isort pip-requirements live-py-mode hy-mode dash-functional helm-pydoc cython-mode anaconda-mode pythonic d-mode go-guru go-eldoc go-mode cmake-project cmake-ide cmake-mode eglot rustic flycheck-rust flymake-rust flycheck toml-mode racer pos-tip cargo markdown-mode rust-mode powershell ws-butler winum which-key volatile-highlights vi-tilde-fringe uuidgen use-package toc-org spaceline powerline restart-emacs request rainbow-delimiters popwin persp-mode pcre2el paradox spinner org-plus-contrib org-bullets open-junk-file neotree move-text macrostep lorem-ipsum linum-relative link-hint indent-guide hydra hungry-delete hl-todo highlight-parentheses highlight-numbers parent-mode highlight-indentation helm-themes helm-swoop helm-projectile helm-mode-manager helm-make projectile pkg-info epl helm-flx helm-descbinds helm-ag google-translate golden-ratio flx-ido flx fill-column-indicator fancy-battery eyebrowse expand-region exec-path-from-shell evil-visualstar evil-visual-mark-mode evil-unimpaired evil-tutor evil-surround evil-search-highlight-persist evil-numbers evil-nerd-commenter evil-mc evil-matchit evil-lisp-state smartparens evil-indent-plus evil-iedit-state iedit evil-exchange evil-escape evil-ediff evil-args evil-anzu anzu evil goto-chg undo-tree eval-sexp-fu highlight elisp-slime-nav dumb-jump f dash s diminish define-word column-enforce-mode clean-aindent-mode bind-map bind-key auto-highlight-symbol auto-compile packed aggressive-indent adaptive-wrap ace-window ace-link ace-jump-helm-line helm avy helm-core popup async))))
+    (evil-magit smeargle orgit magit-gitflow magit-popup magit helm-gitignore helm-company helm-c-yasnippet gitignore-mode gitconfig-mode gitattributes-mode git-timemachine git-messenger git-link fuzzy flycheck-rust flycheck-pos-tip transient git-commit with-editor company-tern dash-functional tern company-statistics company auto-yasnippet ac-ispell powerline spinner hydra lv parent-mode projectile pkg-info epl flx highlight smartparens iedit anzu evil goto-chg undo-tree f dash s bind-map bind-key packed helm avy helm-core popup async toml-mode racer pos-tip cargo markdown-mode rust-mode ahk-mode web-beautify livid-mode skewer-mode simple-httpd json-mode json-snatcher json-reformat js2-refactor yasnippet multiple-cursors js2-mode js-doc coffee-mode omnisharp auto-complete flycheck csharp-mode ws-butler winum which-key volatile-highlights vi-tilde-fringe uuidgen use-package toc-org spaceline restart-emacs request rainbow-delimiters popwin persp-mode pcre2el paradox org-plus-contrib org-bullets open-junk-file neotree move-text macrostep lorem-ipsum linum-relative link-hint indent-guide hungry-delete hl-todo highlight-parentheses highlight-numbers highlight-indentation helm-themes helm-swoop helm-projectile helm-mode-manager helm-make helm-flx helm-descbinds helm-ag google-translate golden-ratio flx-ido fill-column-indicator fancy-battery eyebrowse expand-region exec-path-from-shell evil-visualstar evil-visual-mark-mode evil-unimpaired evil-tutor evil-surround evil-search-highlight-persist evil-numbers evil-nerd-commenter evil-mc evil-matchit evil-lisp-state evil-indent-plus evil-iedit-state evil-exchange evil-escape evil-ediff evil-args evil-anzu eval-sexp-fu elisp-slime-nav dumb-jump diminish define-word column-enforce-mode clean-aindent-mode auto-highlight-symbol auto-compile aggressive-indent adaptive-wrap ace-window ace-link ace-jump-helm-line))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- )
+ '(default ((t (:foreground "#bdbdb3" :background "gray13")))))
