@@ -54,10 +54,6 @@
 ;;; Autoreload changed files
 (global-auto-revert-mode t)
 
-;;; Username
-(setq user-full-name "Saurabh Sangpal"
-      user-mail-address "saurabh.s@juegostudio.net")
-
 ;;; Set default frame size
 (add-to-list 'default-frame-alist '(height . 40))
 (add-to-list 'default-frame-alist '(width . 100))
