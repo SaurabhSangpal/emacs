@@ -12,10 +12,9 @@
   (package-install 'use-package))
 
 (set-face-attribute 'default nil
-                    :family "IBM Plex Mono"
-                    :height 100
-                    :weight 'regular
-                    :width 'condensed)
+                    :family "Input"
+                    :height 90
+                    :weight 'regular)
 
 (setq-default tab-width 4)
 (setq-default tab-stop-list (number-sequence 4 120 4))
